@@ -91,3 +91,10 @@ If splitt0r finds the same title more than once, it will proceed as follows:
   - The third file would be:  
   `output/dupes/TITLE (3).txt`
   - and so forth...
+
+### Details
+
+  - It doesn't matter how the input begins -- i.e., the first line doesn't need to be a delimiter line. splitt0r will ignore delimiter lines and empty lines until it finds the first line of actual content.
+  - If there are two or more delimiter lines with no lines or just empty lines in between them, they will be ignored. splitt0r won't produce empty output files.
+  - splitt0r will remove any empty lines that occur right before or right after the actual content. That means, you can have as many empty lines around your delimiter lines as you wish. If your content contains empty lines, they will be preserved.
+  - If there is any whitespace (spaces, tabs...) *after* the delimiter characters, splitt0r will still consider the line a delimiter line. For example, `=====<SPACE><SPACE>` is a valid delimitor line. The opposite is not true: If there is any whitespace *before* the delimiter characters, the line is not recognized as a delimiter -- so `<SPACE><SPACE>=====` will be considered part of the content.
