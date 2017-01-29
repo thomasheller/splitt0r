@@ -42,7 +42,7 @@ go get github.com/thomasheller/splitt0r
 
 ## Usage
 
-splitt0r supports three modes of operations:
+splitt0r supports three modes of operation:
   - `-stats` prints a few statistics about the input
   - `-print` prints all titles found in the input (see below for what's a title)
   - `-write` actually writes the split files into the output directory
