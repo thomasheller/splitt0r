@@ -47,7 +47,7 @@ splitt0r supports three modes of operation:
   - `-print` prints all titles found in the input (see below for what's a title)
   - `-write` actually writes the split files into the output directory
 
-If you don't pass any of the options, `-stats` is implied.
+If you don't pass any of the options, `-stats` is implied. You can supply multiple mode flags if you like.
 
 ### Input
 
