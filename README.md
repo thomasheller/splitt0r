@@ -78,8 +78,7 @@ Note that `EXTENSION` must include the leading dot (unless you don't want a dot)
 splitt0r will use the first word that appears after a delimiter line as the filename ("title") for the output (split) file.
 
 There is a special mode called `-wiki` which parses the content according to MediaWiki markup rules.
-In this case, the first word that is formatted either *italic*, **bold** or ***bold-italic*** is used
-as the filename ("title"), whichever comes first.
+In this case, the first word that is formatted either *italic* (`''italic''`), **bold** (`'''bold'''`) or ***bold-italic*** (`''''bold-italic''''`) is used as the filename ("title"), whichever comes first.
 
 #### Duplicates
 
