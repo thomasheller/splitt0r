@@ -91,6 +91,8 @@ If splitt0r finds the same title more than once, it will proceed as follows:
   `output/dupes/TITLE (3).txt`
   - and so forth...
 
+This applies to `-write` mode. If you use `-print` to get a list of all titles, splitt0r will print the titles regardless of how often they appear in the input -- no indices will be appended. This is by design. In `-stats` mode, splitt0r will tell you how many duplicates appeared.
+
 ### Details
 
   - It doesn't matter how the input begins -- i.e., the first line doesn't need to be a delimiter line. splitt0r will ignore delimiter lines and empty lines until it finds the first line of actual content.
