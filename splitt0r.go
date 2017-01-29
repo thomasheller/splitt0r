@@ -190,9 +190,14 @@ func main() {
 	}
 
 	if doStats {
+		var average int
+		if articlesCount > 0 {
+			average = linesCount / articlesCount
+		}
+
 		log.Printf("Number of files: %d\n", articlesCount)
 		log.Printf("Number of lines: %d\n", linesCount)
-		log.Printf("Average numer of lines: %d\n", linesCount/articlesCount)
+		log.Printf("Average numer of lines: %d\n", average)
 		log.Printf("Number of titles that appeared more than once: %d\n", dupeTitlesCount)
 		log.Printf("Number of duplicate files: %d\n", dupeFilesCount)
 	}
