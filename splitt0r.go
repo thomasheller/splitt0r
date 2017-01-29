@@ -63,6 +63,10 @@ func main() {
 
 	flag.Parse()
 
+	if delimiterLen <= 0 {
+		log.Fatal("Error: delimiter length must be 1 or greater")
+	}
+
 	if len(*delimiter) != 1 {
 		log.Fatal("Error: delimiter must be a single character")
 	}
