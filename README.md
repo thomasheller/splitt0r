@@ -80,6 +80,8 @@ splitt0r will use the first word that appears after a delimiter line as the file
 There is a special mode called `-wiki` which parses the content according to MediaWiki markup rules.
 In this case, the first word that is formatted either *italic* (`''italic''`), **bold** (`'''bold'''`) or ***bold-italic*** (`''''bold-italic''''`) is used as the filename ("title"), whichever comes first.
 
+If you use Wiki mode, every first line of content after a delimiter must contain a title that is italic, bold or bold-italic. If it can't find a title as expected, splitt0r will refuse to split the input. You cannot mix the "first word" and "Wiki" approaches.
+
 #### Duplicates
 
 If splitt0r finds the same title more than once, it will proceed as follows:
