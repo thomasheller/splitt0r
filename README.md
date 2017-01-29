@@ -81,6 +81,8 @@ There is a special mode called `-wiki` which parses the content according to Med
 In this case, the first word that is formatted either *italic*, **bold** or ***bold-italic*** is used
 as the filename ("title"), whichever comes first.
 
+#### Duplicates
+
 If splitt0r finds the same title more than once, it will proceed as follows:
   - The first file is put in the regular output directory, for example:  
   `output/TITLE.txt`
