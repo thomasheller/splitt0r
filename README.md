@@ -2,6 +2,20 @@
 
 Split one file into multiple files based on delimiter
 
+For example, take this input file:
+
+```
+=====
+aaa bbb ccc
+ddd eee fff
+=====
+ggg hhh iii
+=====
+jjj kkk lll
+```
+
+splitt0r will read this file and create three new files, `aaa.txt`, `ggg.txt` and `jjj.txt`, each containing the respective lines of text from the original file.
+
 ## Install
 
 Prerequisites:
