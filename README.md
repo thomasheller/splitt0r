@@ -1,5 +1,7 @@
 # splitt0r
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/thomasheller/splitt0r)](https://goreportcard.com/report/github.com/thomasheller/splitt0r)
+
 Split one file into multiple files based on delimiter
 
 For example, take this input file:
