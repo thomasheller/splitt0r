@@ -13,22 +13,22 @@ import (
 	"unicode"
 )
 
-type State int
+type parserState int
 
 const (
-	DELIMITER = iota
-	LEADINGEMPTY
-	CONTENT
-	EMPTY
+	delimiter = iota
+	leadingEmpty
+	content
+	empty
 )
 
-type Markup int
+type wikiMarkup int
 
 const (
-	NONE = iota
-	ITALIC
-	BOLD
-	BOLDITALIC
+	none = iota
+	italic
+	bold
+	boldItalic
 )
 
 var (
@@ -43,7 +43,7 @@ var (
 
 	dupesDir string
 
-	titles          map[string]int = map[string]int{}
+	titles          = map[string]int{}
 	articlesCount   int
 	linesCount      int
 	dupeTitlesCount int
@@ -52,7 +52,7 @@ var (
 
 func main() {
 	filename := flag.String("file", "", "input filename")
-	delimiter := flag.String("char", "=", "delimiter char")
+	char := flag.String("char", "=", "delimiter char")
 	flag.IntVar(&delimiterLen, "len", 5, "minimum number of delimiter chars")
 	flag.BoolVar(&wikimode, "wiki", false, "detect titles with MediaWiki markup")
 	flag.BoolVar(&doWrite, "write", false, "actually write output files")
@@ -67,11 +67,13 @@ func main() {
 		log.Fatal("Error: delimiter length must be 1 or greater")
 	}
 
-	if len(*delimiter) != 1 {
+	if len(*char) != 1 {
 		log.Fatal("Error: delimiter must be a single character")
 	}
 
-	delimiterChar = []rune(*delimiter)[0]
+	useStdin := *filename == ""
+
+	delimiterChar = []rune(*char)[0]
 
 	if !doWrite && !doPrint && !doStats {
 		doStats = true
@@ -80,28 +82,12 @@ func main() {
 	dupesDir = path.Join(outputDir, "dupes")
 
 	if doWrite {
-		err := os.MkdirAll(outputDir, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Error creating output directory %s: %s\n", outputDir, err)
-		}
-
-		isEmpty, err := isDirEmpty(outputDir)
-		if err != nil {
-			log.Fatalf("Error while checking if output directory %s is empty: %s\n", outputDir, err)
-		}
-		if !isEmpty {
-			log.Fatalf("Error: Please make sure the output directory %s is empty\n", outputDir)
-		}
-
-		err = os.MkdirAll(dupesDir, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Error creating duplicates directory %s: %s\n", dupesDir, err)
-		}
+		prepareOutputDirs()
 	}
 
 	var scanner *bufio.Scanner
 
-	if *filename == "" {
+	if useStdin {
 		scanner = bufio.NewScanner(os.Stdin)
 	} else {
 		file, err := os.Open(*filename)
@@ -112,94 +98,38 @@ func main() {
 		scanner = bufio.NewScanner(file)
 	}
 
-	state := LEADINGEMPTY
-	emptyLines := 0
-	var title string
-	content := make([]string, 0)
+	err := parseFile(scanner)
 
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		switch state {
-		case DELIMITER:
-			if isEmpty(line) {
-				state = LEADINGEMPTY
-			} else if isDelimiter(line) {
-				// skip
-			} else {
-				state = CONTENT
-				title = parseTitle(line)
-				content = append(content, line)
-			}
-		case LEADINGEMPTY:
-			if isEmpty(line) {
-				// skip
-			} else if isDelimiter(line) {
-				state = DELIMITER
-				// discard empty lines:
-				content = make([]string, 0)
-			} else {
-				state = CONTENT
-				title = parseTitle(line)
-				content = append(content, line)
-			}
-		case CONTENT:
-			if isEmpty(line) {
-				state = EMPTY
-				emptyLines = 1
-				content = append(content, line)
-			} else if isDelimiter(line) {
-				state = DELIMITER
-				writeFile(title, content, emptyLines)
-				content = make([]string, 0)
-			} else {
-				content = append(content, line)
-			}
-		case EMPTY:
-			if isEmpty(line) {
-				emptyLines++
-				content = append(content, line)
-			} else if isDelimiter(line) {
-				state = DELIMITER
-				writeFile(title, content, emptyLines)
-				content = make([]string, 0)
-				emptyLines = 0
-			} else {
-				state = CONTENT
-				emptyLines = 0
-				content = append(content, line)
-			}
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		if *filename == "" {
+	if err != nil {
+		if useStdin {
 			log.Fatalf("Error reading from stdin: %s\n", err)
 		} else {
 			log.Fatalf("Error reading from file %s: %s\n", *filename, err)
 		}
 	}
 
-	switch state {
-	case CONTENT:
-		// pretend we hit a delimiter
-		writeFile(title, content, emptyLines)
-	case EMPTY:
-		// pretend we hit a delimiter
-		writeFile(title, content, emptyLines)
+	if doStats {
+		printStats()
+	}
+}
+
+func prepareOutputDirs() {
+	err := os.MkdirAll(outputDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating output directory %s: %s\n", outputDir, err)
 	}
 
-	if doStats {
-		var average int
-		if articlesCount > 0 {
-			average = linesCount / articlesCount
-		}
+	isEmpty, err := isDirEmpty(outputDir)
+	if err != nil {
+		log.Fatalf("Error while checking if output directory %s is empty: %s\n", outputDir, err)
+	}
+	if !isEmpty {
+		log.Fatalf("Error: Please make sure the output directory %s is empty\n", outputDir)
+	}
 
-		log.Printf("Number of files: %d\n", articlesCount)
-		log.Printf("Number of lines: %d\n", linesCount)
-		log.Printf("Average numer of lines: %d\n", average)
-		log.Printf("Number of titles that appeared more than once: %d\n", dupeTitlesCount)
-		log.Printf("Number of duplicate files: %d\n", dupeFilesCount)
+	err = os.MkdirAll(dupesDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating duplicates directory %s: %s\n", dupesDir, err)
 	}
 }
 
@@ -216,6 +146,83 @@ func isDirEmpty(name string) (bool, error) {
 		return true, nil
 	}
 	return false, err
+}
+
+func parseFile(scanner *bufio.Scanner) error {
+	state := leadingEmpty
+	emptyLines := 0
+	var title string
+	lines := make([]string, 0)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		switch state {
+		case delimiter:
+			if isEmpty(line) {
+				state = leadingEmpty
+			} else if isDelimiter(line) {
+				// skip
+			} else {
+				state = content
+				title = parseTitle(line)
+				lines = append(lines, line)
+			}
+		case leadingEmpty:
+			if isEmpty(line) {
+				// skip
+			} else if isDelimiter(line) {
+				state = delimiter
+				// discard empty lines:
+				lines = make([]string, 0)
+			} else {
+				state = content
+				title = parseTitle(line)
+				lines = append(lines, line)
+			}
+		case content:
+			if isEmpty(line) {
+				state = empty
+				emptyLines = 1
+				lines = append(lines, line)
+			} else if isDelimiter(line) {
+				state = delimiter
+				writeFile(title, lines, emptyLines)
+				lines = make([]string, 0)
+			} else {
+				lines = append(lines, line)
+			}
+		case empty:
+			if isEmpty(line) {
+				emptyLines++
+				lines = append(lines, line)
+			} else if isDelimiter(line) {
+				state = delimiter
+				writeFile(title, lines, emptyLines)
+				lines = make([]string, 0)
+				emptyLines = 0
+			} else {
+				state = content
+				emptyLines = 0
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	// If input did not end with delimiter, pretend it did:
+
+	switch state {
+	case content:
+		fallthrough
+	case empty:
+		writeFile(title, lines, emptyLines)
+	}
+
+	return nil
 }
 
 func isEmpty(line string) bool {
@@ -249,35 +256,35 @@ func parseTitle(line string) string {
 		idxItalic := rItalic.FindStringIndex(line)
 
 		idxMin := -1
-		var markup Markup
+		var m wikiMarkup
 
 		if idxBoldItalic != nil {
 			idxMin = idxBoldItalic[0]
-			markup = BOLDITALIC
+			m = boldItalic
 		}
 		if idxBold != nil && (idxBold[0] < idxMin || idxMin == -1) {
 			idxMin = idxBold[0]
-			markup = BOLD
+			m = bold
 		}
 		if idxItalic != nil && (idxItalic[0] < idxMin || idxMin == -1) {
-			markup = ITALIC
+			m = italic
 		}
 
-		switch markup {
-		case BOLDITALIC:
+		switch m {
+		case boldItalic:
 			return rBoldItalic.FindStringSubmatch(line)[1]
-		case BOLD:
+		case bold:
 			return rBold.FindStringSubmatch(line)[1]
-		case ITALIC:
+		case italic:
 			return rItalic.FindStringSubmatch(line)[1]
 		}
 
 		log.Fatalf("Error: No title with MediaWiki markup found in line: %s\n", line)
 		return ""
-	} else {
-		firstWord := strings.Fields(line)[0]
-		return firstWord
 	}
+
+	firstWord := strings.Fields(line)[0]
+	return firstWord
 }
 
 func writeFile(title string, content []string, emptyLines int) {
@@ -335,4 +342,17 @@ func writeFile(title string, content []string, emptyLines int) {
 	if doPrint {
 		fmt.Printf("%s\n", title)
 	}
+}
+
+func printStats() {
+	var average int
+	if articlesCount > 0 {
+		average = linesCount / articlesCount
+	}
+
+	log.Printf("Number of files: %d\n", articlesCount)
+	log.Printf("Number of lines: %d\n", linesCount)
+	log.Printf("Average numer of lines: %d\n", average)
+	log.Printf("Number of titles that appeared more than once: %d\n", dupeTitlesCount)
+	log.Printf("Number of duplicate files: %d\n", dupeFilesCount)
 }
