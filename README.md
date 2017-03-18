@@ -1,6 +1,8 @@
 # splitt0r
 
+[![Build Status](https://travis-ci.org/thomasheller/splitt0r.svg?branch=master)](https://travis-ci.org/thomasheller/splitt0r)
 [![Go Report Card](https://goreportcard.com/badge/github.com/thomasheller/splitt0r)](https://goreportcard.com/report/github.com/thomasheller/splitt0r)
+[![Coverage Status](https://coveralls.io/repos/github/thomasheller/splitt0r/badge.svg?branch=master)](https://coveralls.io/github/thomasheller/splitt0r?branch=master)
 
 Split one file into multiple files based on delimiter
 
